@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Instagram Border / Canvas Calculator</title>
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --card: #121624;
+      --muted: #9aa4b2;
+      --text: #e8eef6;
+      --accent: #7dd3fc;
+      --danger: #fb7185;
+      --ok: #34d399;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(125,211,252,0.14), transparent 60%),
+                  radial-gradient(900px 600px at 80% 30%, rgba(52,211,153,0.10), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .wrap {
+      width: min(980px, 100%);
+      display: grid;
+      gap: 16px;
+    }
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(20px, 2.6vw, 28px);
+      letter-spacing: 0.2px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 16px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 40%), var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .card h2 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: rgba(232,238,246,0.92);
+      font-weight: 650;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+    label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      outline: none;
+      font-size: 16px;
+    }
+    input[type="number"]:focus {
+      border-color: rgba(125,211,252,0.55);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.08);
+    }
+    .btnrow {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    button:hover { border-color: rgba(255,255,255,0.22); }
+    button:active { transform: translateY(1px); }
+    .primary {
+      border-color: rgba(125,211,252,0.35);
+      background: rgba(125,211,252,0.10);
+    }
+    .danger {
+      border-color: rgba(251,113,133,0.35);
+      background: rgba(251,113,133,0.10);
+    }
+    .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .out {
+      display: grid;
+      gap: 12px;
+    }
+    .pillrow {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .pill {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(232,238,246,0.9);
+      background: rgba(255,255,255,0.05);
+    }
+    .pill.ok {
+      border-color: rgba(52,211,153,0.35);
+      background: rgba(52,211,153,0.10);
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.18);
+      align-items: center;
+    }
+    .k {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .v {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .v.big {
+      font-size: 18px;
+    }
+    .copy {
+      margin-left: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      border-radius: 10px;
+    }
+    .warn {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(251,113,133,0.35);
+      background: rgba(251,113,133,0.10);
+      color: rgba(255,255,255,0.92);
+      font-size: 12px;
+      display: none;
+    }
+    footer {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      margin-top: 6px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Instagram Border / Canvas Calculator</h1>
+        <div class="subtitle">Inputs are <b>already scaled</b> image dimensions (px). No upscaling is done here.</div>
+      </div>
+      <div class="pillrow" aria-label="rules">
+        <span class="pill">Portrait → 4:5</span>
+        <span class="pill">Square → 1:1</span>
+        <span class="pill">Landscape → 3:2</span>
+        <span class="pill">+10px on long edge</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Input</h2>
+
+        <div class="row">
+          <div class="field">
+            <label for="w">Image width (px)</label>
+            <input id="w" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g. 720" />
+          </div>
+          <div class="field">
+            <label for="h">Image height (px)</label>
+            <input id="h" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g. 1080" />
+          </div>
+        </div>
+
+        <div class="btnrow">
+          <button class="primary" id="examplePortrait">Fill example (720×1080)</button>
+          <button class="primary" id="exampleLandscape">Fill example (1080×720)</button>
+          <button class="danger" id="reset">Reset</button>
+        </div>
+
+        <div class="note">
+          Guideline implemented:
+          <ol style="margin:8px 0 0 18px; padding:0;">
+            <li>Image size is fixed (you enter scaled values).</li>
+            <li>Choose target aspect ratio by orientation.</li>
+            <li>Expand canvas on the short edge only until the ratio is reached.</li>
+            <li>With aspect lock, expand canvas by <b>+10px on the image’s long edge</b>.</li>
+            <li>Center the image → borders split evenly.</li>
+          </ol>
+        </div>
+
+        <div class="warn" id="warn"></div>
+      </section>
+
+      <section class="card">
+        <h2>Output</h2>
+
+        <div class="out">
+          <div class="pillrow">
+            <span class="pill" id="orientationPill">Orientation: —</span>
+            <span class="pill ok" id="ratioPill">Target: —</span>
+          </div>
+
+          <div class="kv">
+            <div>
+              <div class="k">Final canvas (W × H)</div>
+              <div class="v big" id="finalWH">—</div>
+            </div>
+            <button class="copy" id="copyFinal" disabled>Copy</button>
+          </div>
+
+          <div class="kv">
+            <div>
+              <div class="k">Border left / right (each)</div>
+              <div class="v" id="borderLR">—</div>
+            </div>
+            <button class="copy" id="copyLR" disabled>Copy</button>
+          </div>
+
+          <div class="kv">
+            <div>
+              <div class="k">Border top / bottom (each)</div>
+              <div class="v" id="borderTB">—</div>
+            </div>
+            <button class="copy" id="copyTB" disabled>Copy</button>
+          </div>
+
+          <div class="kv">
+            <div>
+              <div class="k">Intermediate (ratio-reached canvas)</div>
+              <div class="v" id="ratioCanvas">—</div>
+            </div>
+            <button class="copy" id="copyRatioCanvas" disabled>Copy</button>
+          </div>
+
+          <div class="note">
+            Rounding: uses <span style="font-family:var(--mono)">Math.round()</span> to whole pixels.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Host on GitHub Pages: push this file to a repo and enable Pages for the <code>main</code> branch.
+    </footer>
+  </div>
+
+  <script>
+    // --- Helpers ---
+    const $ = (id) => document.getElementById(id);
+
+    function round(n) {
+      return Math.round(n);
+    }
+
+    function clampInt(n) {
+      if (!Number.isFinite(n)) return null;
+      const x = Math.floor(n);
+      if (x < 1) return null;
+      return x;
+    }
+
+    function copyText(text) {
+      return navigator.clipboard.writeText(text);
+    }
+
+    // --- Core algorithm (inputs already scaled; no resizing here) ---
+    function compute(imgW, imgH) {
+      // Orientation
+      const isSquare = imgW === imgH;
+      const isPortrait = imgH > imgW;
+      const orientation = isSquare ? "Square" : (isPortrait ? "Portrait" : "Landscape");
+
+      // Target ratio by orientation
+      let ratioW, ratioH, ratioLabel;
+      if (isSquare) { ratioW = 1; ratioH = 1; ratioLabel = "1:1"; }
+      else if (isPortrait) { ratioW = 4; ratioH = 5; ratioLabel = "4:5"; }
+      else { ratioW = 3; ratioH = 2; ratioLabel = "3:2"; }
+
+      // Step: expand canvas only on short edge until ratio reached (no image scaling)
+      let canvasW_ratio, canvasH_ratio;
+      if (isPortrait) {
+        canvasW_ratio = imgW;
+        canvasH_ratio = round(imgW * ratioH / ratioW);
+        // Ensure we never shrink: if computed is smaller than image, expand the other side instead.
+        if (canvasH_ratio < imgH) {
+          canvasH_ratio = imgH;
+          canvasW_ratio = round(imgH * ratioW / ratioH);
+        }
+      } else if (isSquare) {
+        canvasW_ratio = imgW;
+        canvasH_ratio = imgH;
+      } else {
+        canvasH_ratio = imgH;
+        canvasW_ratio = round(imgH * ratioW / ratioH);
+        if (canvasW_ratio < imgW) {
+          canvasW_ratio = imgW;
+          canvasH_ratio = round(imgW * ratioH / ratioW);
+        }
+      }
+
+      // Step: +10px on long edge with aspect lock
+      let finalW, finalH;
+      if (isSquare) {
+        // Keep square look: +10 on both
+        finalW = canvasW_ratio + 10;
+        finalH = canvasH_ratio + 10;
+      } else if (isPortrait) {
+        finalH = canvasH_ratio + 10;                   // long edge is height
+        finalW = round(finalH * ratioW / ratioH);      // keep target ratio
+      } else {
+        finalW = canvasW_ratio + 10;                   // long edge is width
+        finalH = round(finalW * ratioH / ratioW);      // keep target ratio
+      }
+
+      // Borders per side (centered image)
+      const borderLR = round((finalW - imgW) / 2);
+      const borderTB = round((finalH - imgH) / 2);
+
+      return {
+        orientation, ratioLabel, ratioW, ratioH,
+        canvasW_ratio, canvasH_ratio,
+        finalW, finalH,
+        borderLR, borderTB
+      };
+    }
+
+    // --- UI wiring ---
+    const wEl = $("w");
+    const hEl = $("h");
+    const warnEl = $("warn");
+
+    const orientationPill = $("orientationPill");
+    const ratioPill = $("ratioPill");
+
+    const finalWH = $("finalWH");
+    const borderLR = $("borderLR");
+    const borderTB = $("borderTB");
+    const ratioCanvas = $("ratioCanvas");
+
+    const copyFinal = $("copyFinal");
+    const copyLR = $("copyLR");
+    const copyTB = $("copyTB");
+    const copyRatioCanvas = $("copyRatioCanvas");
+
+    function setWarn(msg) {
+      if (!msg) {
+        warnEl.style.display = "none";
+        warnEl.textContent = "";
+        return;
+      }
+      warnEl.style.display = "block";
+      warnEl.textContent = msg;
+    }
+
+    function setCopyButtonsEnabled(enabled) {
+      [copyFinal, copyLR, copyTB, copyRatioCanvas].forEach(btn => btn.disabled = !enabled);
+    }
+
+    function render() {
+      const imgW = clampInt(Number(wEl.value));
+      const imgH = clampInt(Number(hEl.value));
+
+      if (!imgW || !imgH) {
+        orientationPill.textContent = "Orientation: —";
+        ratioPill.textContent = "Target: —";
+        finalWH.textContent = "—";
+        borderLR.textContent = "—";
+        borderTB.textContent = "—";
+        ratioCanvas.textContent = "—";
+        setCopyButtonsEnabled(false);
+        setWarn("");
+        return;
+      }
+
+      // Gentle warning: user guideline says inputs are already scaled and long edge <= 1080
+      const longEdge = Math.max(imgW, imgH);
+      if (longEdge > 1080) {
+        setWarn("Note: Your long edge is > 1080px. According to your guideline, scale it down first (no upscaling). The calculator still works, but your input might not match your workflow.");
+      } else {
+        setWarn("");
+      }
+
+      const res = compute(imgW, imgH);
+
+      orientationPill.textContent = `Orientation: ${res.orientation}`;
+      ratioPill.textContent = `Target: ${res.ratioLabel}`;
+
+      finalWH.textContent = `${res.finalW} × ${res.finalH}`;
+      borderLR.textContent = `${res.borderLR}px`;
+      borderTB.textContent = `${res.borderTB}px`;
+      ratioCanvas.textContent = `${res.canvasW_ratio} × ${res.canvasH_ratio}`;
+
+      // Copy actions
+      copyFinal.onclick = async () => {
+        await copyText(`${res.finalW}x${res.finalH}`);
+        copyFinal.textContent = "Copied!";
+        setTimeout(() => (copyFinal.textContent = "Copy"), 900);
+      };
+      copyLR.onclick = async () => {
+        await copyText(`${res.borderLR}`);
+        copyLR.textContent = "Copied!";
+        setTimeout(() => (copyLR.textContent = "Copy"), 900);
+      };
+      copyTB.onclick = async () => {
+        await copyText(`${res.borderTB}`);
+        copyTB.textContent = "Copied!";
+        setTimeout(() => (copyTB.textContent = "Copy"), 900);
+      };
+      copyRatioCanvas.onclick = async () => {
+        await copyText(`${res.canvasW_ratio}x${res.canvasH_ratio}`);
+        copyRatioCanvas.textContent = "Copied!";
+        setTimeout(() => (copyRatioCanvas.textContent = "Copy"), 900);
+      };
+
+      setCopyButtonsEnabled(true);
+    }
+
+    wEl.addEventListener("input", render);
+    hEl.addEventListener("input", render);
+
+    $("examplePortrait").addEventListener("click", () => {
+      wEl.value = 720;
+      hEl.value = 1080;
+      render();
+    });
+    $("exampleLandscape").addEventListener("click", () => {
+      wEl.value = 1080;
+      hEl.value = 720;
+      render();
+    });
+    $("reset").addEventListener("click", () => {
+      wEl.value = "";
+      hEl.value = "";
+      render();
+    });
+
+    // initial render
+    render();
+  </script>
+</body>
+</html>
