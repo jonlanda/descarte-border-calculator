@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>4:5 Portrait Border Calculator</title>
+  <title>Border Calculator</title>
   <style>
     :root{
       --bg:#0f1115;
@@ -12,6 +12,7 @@
       --muted:#a7b0be;
       --line:rgba(255,255,255,.10);
       --accent:#6ea8fe;
+      --warn:#fbbf24;
       --radius:14px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -25,32 +26,31 @@
       min-height:100vh;
       display:grid;
       place-items:center;
-      padding:24px;
+      padding:22px;
     }
-    .wrap{width:min(860px, 100%); display:grid; gap:14px;}
+    .wrap{width:min(940px, 100%); display:grid; gap:14px;}
     header{
       display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;
     }
     h1{margin:0; font-size:20px; letter-spacing:.2px;}
     .sub{margin:6px 0 0 0; color:var(--muted); font-size:13px; line-height:1.4;}
+    .pills{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:7px 10px; border:1px solid var(--line); border-radius:999px;
       color:var(--muted); font-size:12px;
+      background:rgba(255,255,255,.02);
     }
+    .pill b{color:var(--text)}
     .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
-    @media (max-width: 820px){ .grid{grid-template-columns:1fr;} }
+    @media (max-width: 860px){ .grid{grid-template-columns:1fr;} }
     .card{
       background:var(--card);
       border:1px solid var(--line);
       border-radius:var(--radius);
       padding:16px;
     }
-    .card h2{
-      margin:0 0 12px 0;
-      font-size:14px;
-      color:rgba(232,238,246,.92);
-    }
+    .card h2{margin:0 0 12px 0; font-size:14px; color:rgba(232,238,246,.92)}
     .row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
     .field{display:grid; gap:7px;}
     label{font-size:12px; color:var(--muted);}
@@ -68,10 +68,8 @@
       border-color: rgba(110,168,254,.55);
       box-shadow:0 0 0 4px rgba(110,168,254,.12);
     }
-    .hint{margin-top:10px; color:var(--muted); font-size:12px; line-height:1.45;}
-    .out{
-      display:grid; gap:10px;
-    }
+    .note{margin-top:10px; color:var(--muted); font-size:12px; line-height:1.45;}
+    .out{display:grid; gap:10px;}
     .kv{
       border:1px solid rgba(255,255,255,.10);
       border-radius:12px;
@@ -84,7 +82,7 @@
     }
     .k{color:var(--muted); font-size:12px;}
     .v{font-family:var(--mono); font-weight:800; font-size:15px;}
-    .v.big{font-size:17px;}
+    .v.big{font-size:18px;}
     button{
       cursor:pointer;
       border:1px solid rgba(255,255,255,.14);
@@ -96,21 +94,16 @@
       font-weight:700;
     }
     button:hover{border-color:rgba(255,255,255,.22)}
-    .warn{
+    .warnbox{
       display:none;
       margin-top:10px;
       padding:10px 12px;
       border-radius:12px;
-      border:1px solid rgba(255,193,7,.35);
-      background:rgba(255,193,7,.10);
+      border:1px solid rgba(251,191,36,.35);
+      background:rgba(251,191,36,.10);
       color:rgba(255,255,255,.92);
       font-size:12px;
       line-height:1.45;
-    }
-    .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
-    .primary{
-      border-color: rgba(110,168,254,.35);
-      background: rgba(110,168,254,.12);
     }
     footer{color:var(--muted); font-size:12px; text-align:center; padding-top:4px;}
     code{font-family:var(--mono);}
@@ -120,12 +113,13 @@
   <div class="wrap">
     <header>
       <div>
-        <h1>4:5 Portrait Border Calculator</h1>
-        <p class="sub">
-          No resizing. Canvas only expands (never shrinks). Output is always <b>4:5</b>.
-        </p>
+        <h1>Border Calculator</h1>
+        <p class="sub">Enter image pixels. You’ll get the final canvas size and a warning if any extra adjustment is needed.</p>
       </div>
-      <div class="pill">Default border: <b>0.93%</b> of final height</div>
+      <div class="pills">
+        <div class="pill">Orientation: <b id="oriPill">—</b></div>
+        <div class="pill">Default border: <b>3%</b></div>
+      </div>
     </header>
 
     <div class="grid">
@@ -143,28 +137,21 @@
           </div>
         </div>
 
-        <div class="field" style="margin-top:12px;">
-          <label for="p">Border percent (p)</label>
-          <input id="p" type="number" min="0" step="0.01" value="0.93" />
+        <div class="field" style="margin-top:12px">
+          <label for="pct">Border percent</label>
+          <input id="pct" type="number" min="0" step="0.1" value="3" />
         </div>
 
-        <div class="btnrow">
-          <button class="primary" id="ex1">Example 3648×5472</button>
-          <button class="primary" id="ex2">Example 1080×1620</button>
-          <button id="reset">Reset</button>
+        <div class="note">
+          Rules:
+          <ul style="margin:8px 0 0 18px; padding:0;">
+            <li><b>Portrait:</b> add % of <b>height</b> to W &amp; H, then ensure <b>4:5</b> (crop or expand border).</li>
+            <li><b>Square:</b> add % of side to W &amp; H.</li>
+            <li><b>Landscape:</b> add % of <b>width</b> to W &amp; H. If too wide for IG, fit into <b>3:2</b> border.</li>
+          </ul>
         </div>
 
-        <div class="warn" id="warn"></div>
-
-        <div class="hint">
-          Method (portrait 4:5):
-          <ol style="margin:8px 0 0 18px; padding:0;">
-            <li>Enforce 4:5 by expanding canvas only (no shrinking).</li>
-            <li>Compute extra border <code>B = ceil(H_ratio × p/100)</code>.</li>
-            <li>Add <code>B</code> to height and keep ratio locked (width grows accordingly).</li>
-            <li>Center the image in the final canvas.</li>
-          </ol>
-        </div>
+        <div class="warnbox" id="warn"></div>
       </section>
 
       <section class="card">
@@ -173,7 +160,7 @@
         <div class="out">
           <div class="kv">
             <div>
-              <div class="k">Final canvas (W × H)</div>
+              <div class="k">Final recommended canvas (W × H)</div>
               <div class="v big" id="finalWH">—</div>
             </div>
             <button id="copyFinal" disabled>Copy</button>
@@ -181,44 +168,29 @@
 
           <div class="kv">
             <div>
-              <div class="k">Borders (exact)</div>
-              <div class="v" id="borders">—</div>
+              <div class="k">Notes</div>
+              <div class="v" id="notes">—</div>
             </div>
-            <button id="copyBorders" disabled>Copy</button>
+            <button id="copyNotes" disabled>Copy</button>
           </div>
 
-          <div class="kv">
-            <div>
-              <div class="k">Intermediate (4:5 before % add)</div>
-              <div class="v" id="ratioStep">—</div>
-            </div>
-            <button id="copyRatio" disabled>Copy</button>
-          </div>
-
-          <div class="kv">
-            <div>
-              <div class="k">Extra border B (pixels)</div>
-              <div class="v" id="Bpx">—</div>
-            </div>
-            <button id="copyB" disabled>Copy</button>
-          </div>
-
-          <div class="hint">
-            Tip: This is intended for <b>portrait images</b> (H &gt; W). If you enter a landscape image, it will still output a 4:5 canvas (with very large side borders).
+          <div class="note">
+            IG feed accepted aspect ratio range is roughly <b>1.91:1</b> to <b>4:5</b>. This tool warns if a landscape is outside that and suggests fitting into <b>3:2</b>.
           </div>
         </div>
       </section>
     </div>
 
     <footer>
-      Host on GitHub Pages: commit this <code>index.html</code> to <code>main</code> and enable Pages for <code>/(root)</code>.
+      GitHub Pages: commit this <code>index.html</code> to <code>main</code> and enable Pages for <code>/(root)</code>.
     </footer>
   </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
+    const ceil = Math.ceil;
 
-    function clampPosInt(x) {
+    function clampPosInt(x){
       if (!Number.isFinite(x)) return null;
       const n = Math.floor(x);
       return n >= 1 ? n : null;
@@ -232,104 +204,122 @@
       });
     }
 
-    /**
-     * 4:5 portrait canvas with percentage-based extra border.
-     * - No scaling
-     * - Never shrinks; only expands
-     * - Final ratio always 4:5
-     */
-    function calcPortrait45(W, H, p) {
-      const rw = 4, rh = 5;
-
-      // Enforce 4:5 without shrinking:
-      // Required height for 4:5 at current width:
-      const H_target = Math.ceil(W * rh / rw);
-
-      // Height after ratio enforcement must be >= original height and >= target
-      const H_ratio = Math.max(H, H_target);
-
-      // Width that matches 4:5 at H_ratio (may expand width)
-      const W_ratio = Math.ceil(H_ratio * rw / rh);
-
-      // Percentage-based extra border (based on the ratio-enforced long edge)
-      const B = Math.ceil(H_ratio * (p / 100));
-
-      // Add B to long edge, keep ratio locked
-      const H_final = H_ratio + B;
-      const W_final = Math.ceil(H_final * rw / rh);
-
-      // Exact borders vs original image (centered)
-      const padW = W_final - W;
-      const padH = H_final - H;
-
-      return {
-        W_ratio, H_ratio,
-        B,
-        W_final, H_final,
-        left: Math.floor(padW / 2),
-        right: Math.ceil(padW / 2),
-        top: Math.floor(padH / 2),
-        bottom: Math.ceil(padH / 2),
-      };
-    }
-
-    function setWarn(msg) {
+    function setWarn(msg){
       const el = $("warn");
-      if (!msg) {
-        el.style.display = "none";
-        el.textContent = "";
-        return;
-      }
-      el.style.display = "block";
+      if (!msg){ el.style.display="none"; el.textContent=""; return; }
+      el.style.display="block";
       el.textContent = msg;
     }
 
-    function render() {
+    function orientationLabel(W,H){
+      if (W === H) return "Square";
+      if (H > W) return "Portrait";
+      return "Landscape";
+    }
+
+    // Expand-only fit to a target ratio (rw:rh) such that final contains current W,H.
+    function fitExpandOnlyToRatio(W, H, rw, rh){
+      const Hcand = ceil(W * rh / rw); // keep width
+      const Wcand = ceil(H * rw / rh); // keep height
+
+      if (Hcand >= H) return { Wf: W, Hf: Hcand, mode: "Expanded height" };
+      return { Wf: Wcand, Hf: H, mode: "Expanded width" };
+    }
+
+    function compute(W, H, pct){
+      const ori = orientationLabel(W,H);
+      const p = pct / 100;
+
+      // Base border amount depends on orientation per your rules
+      let B;
+      if (ori === "Portrait") B = ceil(H * p);       // % of height
+      else if (ori === "Square") B = ceil(W * p);    // % of side
+      else B = ceil(W * p);                          // % of width (landscape)
+
+      // After applying border (adds to both W and H)
+      const baseW = W + B;
+      const baseH = H + B;
+
+      let finalW = baseW, finalH = baseH;
+      let notes = "";
+
+      if (ori === "Portrait") {
+        // Ensure 4:5. If not, recommend expand-border fix (no shrinking).
+        const is45 = (baseW * 5 === baseH * 4);
+        if (is45) {
+          notes = "Portrait is already 4:5 after the border. No extra adjustment needed.";
+        } else {
+          const fit = fitExpandOnlyToRatio(baseW, baseH, 4, 5);
+          finalW = fit.Wf;
+          finalH = fit.Hf;
+
+          const extraW = finalW - baseW;
+          const extraH = finalH - baseH;
+
+          notes =
+            `After border: ${baseW}×${baseH} (not 4:5). ` +
+            `Expand to ${finalW}×${finalH} (${fit.mode}). ` +
+            `Extra for 4:5: +${extraW}px W, +${extraH}px H.`;
+          setWarn("Portrait needs 4:5. You must either crop to 4:5 or expand the border. This tool recommends the expand-border option.");
+        }
+      } else if (ori === "Landscape") {
+        // Warn if likely outside IG feed ratio limits, suggest fitting to 3:2 by expanding only
+        const ratio = baseW / baseH;
+        if (ratio > 1.91) {
+          const fit = fitExpandOnlyToRatio(baseW, baseH, 3, 2);
+          finalW = fit.Wf;
+          finalH = fit.Hf;
+          const extraW = finalW - baseW;
+          const extraH = finalH - baseH;
+
+          notes =
+            `Very wide for IG (ratio ~${ratio.toFixed(2)}). ` +
+            `Suggested: fit into 3:2 → ${finalW}×${finalH}. ` +
+            `Extra for 3:2: +${extraW}px W, +${extraH}px H.`;
+          setWarn("Landscape looks too wide for the IG feed. Consider fitting it into a 3:2 border (expand only).");
+        } else {
+          notes = "Landscape is within common IG feed ratio limits. No special adjustment needed.";
+          setWarn("");
+        }
+      } else {
+        notes = "Square: no special adjustment needed.";
+        setWarn("");
+      }
+
+      return { ori, finalW, finalH, baseW, baseH, notes };
+    }
+
+    function render(){
       const W = clampPosInt(Number($("w").value));
       const H = clampPosInt(Number($("h").value));
-      const p = Number($("p").value);
+      const pct = Number($("pct").value);
 
-      const valid = W && H && Number.isFinite(p) && p >= 0;
+      const valid = W && H && Number.isFinite(pct) && pct >= 0;
 
-      const btns = [$("copyFinal"), $("copyBorders"), $("copyRatio"), $("copyB")];
-      btns.forEach(b => b.disabled = !valid);
+      $("copyFinal").disabled = !valid;
+      $("copyNotes").disabled = !valid;
 
-      if (!valid) {
+      if (!valid){
+        $("oriPill").textContent = "—";
         $("finalWH").textContent = "—";
-        $("borders").textContent = "—";
-        $("ratioStep").textContent = "—";
-        $("Bpx").textContent = "—";
+        $("notes").textContent = "—";
         setWarn("");
         return;
       }
 
-      if (H <= W) {
-        setWarn("This tool is meant for portraits (H > W). You entered a landscape or square image; output will still be 4:5, but borders may be huge.");
-      } else {
-        setWarn("");
-      }
+      const ori = orientationLabel(W,H);
+      $("oriPill").textContent = ori;
 
-      const r = calcPortrait45(W, H, p);
+      const r = compute(W,H,pct);
 
-      $("finalWH").textContent = `${r.W_final} × ${r.H_final}`;
-      $("ratioStep").textContent = `${r.W_ratio} × ${r.H_ratio}`;
-      $("Bpx").textContent = `${r.B}px`;
-      $("borders").textContent = `L ${r.left}px / R ${r.right}px / T ${r.top}px / B ${r.bottom}px`;
+      $("finalWH").textContent = `${r.finalW} × ${r.finalH}`;
+      $("notes").textContent = r.notes;
 
-      $("copyFinal").onclick = () => copy($("copyFinal"), `${r.W_final}x${r.H_final}`);
-      $("copyRatio").onclick = () => copy($("copyRatio"), `${r.W_ratio}x${r.H_ratio}`);
-      $("copyB").onclick = () => copy($("copyB"), `${r.B}`);
-      $("copyBorders").onclick = () => copy($("copyBorders"), `L${r.left} R${r.right} T${r.top} B${r.bottom}`);
+      $("copyFinal").onclick = () => copy($("copyFinal"), `${r.finalW}x${r.finalH}`);
+      $("copyNotes").onclick = () => copy($("copyNotes"), r.notes);
     }
 
-    $("w").addEventListener("input", render);
-    $("h").addEventListener("input", render);
-    $("p").addEventListener("input", render);
-
-    $("ex1").addEventListener("click", () => { $("w").value = 3648; $("h").value = 5472; render(); });
-    $("ex2").addEventListener("click", () => { $("w").value = 1080; $("h").value = 1620; render(); });
-    $("reset").addEventListener("click", () => { $("w").value = ""; $("h").value = ""; $("p").value = 0.93; render(); });
-
+    ["w","h","pct"].forEach(id => $(id).addEventListener("input", render));
     render();
   </script>
 </body>
